@@ -27,7 +27,7 @@ function HAR_regressors(data)
 end
 
 """
-    OLS estimator
+    OLS with constant
 """
 
 function OLSestimatorconst(y,x)
