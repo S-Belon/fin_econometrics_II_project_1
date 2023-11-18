@@ -81,7 +81,7 @@ function trainW3(x_train, y_train, x_valid, y_valid; nodes=[5,2], eta=0.001, n_e
     # ytrain (1, T)
 
     # model
-    neural_net = Chain(
+    neural_net = Flux.Chain(
                         Dense(size(x_train,1),  nodes[1]), Dropout(0.2),
                         Dense(nodes[1], nodes[2]),
                         Dense(nodes[2], size(y_train,1)),
