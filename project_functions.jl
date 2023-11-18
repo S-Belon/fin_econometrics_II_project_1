@@ -71,7 +71,53 @@ function predict_har(params, features)
 end
 
 """
-    Training model
+    train FFNN model 
+"""
+function trainW3(x_train, y_train, x_valid, y_valid; nodes=[5,2], eta=0.001, n_epochs=100)
+    #data
+
+
+    # xtrain (3, T)
+    # ytrain (1, T)
+
+    # model
+    neural_net = Chain(
+                        Dense(size(x_train,1),  nodes[1]), Dropout(0.2),
+                        Dense(nodes[1], nodes[2]),
+                        Dense(nodes[2], size(y_train,1)),
+    )
+
+    # loss
+    # loss(x, y; model = neural_net) = Flux.Losses.mse(model(x), y)
+    loss(x, y) = Flux.Losses.mse(neural_net(x), y)
+
+    # optimization
+    opt = Descent(eta)
+    # opt = ADAM(eta)
+
+    # params
+    my_params = Flux.params(neural_net)
+    orig_params = deepcopy(my_params)
+
+    # reporting
+    losses_train = []
+    losses_valid = []
+
+    # Train loop over the data
+    for epoch in 1:n_epochs
+        # training
+        Flux.train!(loss, my_params, [(x_train, y_train)], opt)
+        # reporting
+        push!(losses_train, loss(x_train, y_train))
+        push!(losses_valid, loss(x_valid, y_valid))
+        epoch % 20 == 0 ? println("Epoch $epoch \t Loss: ", losses_train[end], " \t Test: ", losses_valid[end]) : nothing
+    end
+
+    return neural_net, losses_train, losses_valid
+end
+
+"""
+    Training RNN model 
 """
 
 function trainW4(x_train, y_train, x_valid, y_valid; nodes=[20,10], eta=0.001, n_epochs=100, verbose=20, maxpatience=20, drop=0.0, lambdaW=0.0f0)
