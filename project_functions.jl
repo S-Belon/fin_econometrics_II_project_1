@@ -117,6 +117,75 @@ function trainW3(x_train, y_train, x_valid, y_valid; nodes=[5,2], eta=0.001, n_e
 end
 
 """
+    FFNN prediction
+"""
+
+function ffnn(x_train, y_train, x_valid, y_valid; nodes=[5,2], eta=0.001, n_epochs=100, verbose=20, maxpatience=20, drop=0.0, lambdaW=0.0f0)
+    #data
+
+
+    # xtrain (3, T)
+    # ytrain (1, T)
+
+    # model
+    neural_net = Flux.Chain(
+                Dense(size(x_train, 1), nodes[1]),
+                BatchNorm(nodes[1]),
+                relu,
+                Dense(nodes[1], nodes[2]),
+                BatchNorm(nodes[2]),
+                relu,
+                Dense(nodes[2], size(y_train, 1))
+)
+
+    # loss
+    # loss(x, y; model = neural_net) = Flux.Losses.mse(model(x), y)
+    loss(x, y) = Flux.Losses.mse(neural_net(x), y)
+
+    # optimization
+    opt = ADAM(eta)
+
+    # params
+    my_params = Flux.params(neural_net)
+    orig_params = deepcopy(my_params)
+
+    # reporting
+    losses_train = []
+    losses_valid = []
+    best_loss = Inf
+    patience = 0
+
+    # Train loop over the data
+    for epoch in 1:n_epochs
+        # training
+        Flux.train!(loss, my_params, [(x_train, y_train)], opt)
+        # reporting
+        push!(losses_train, loss(x_train, y_train))
+        push!(losses_valid, loss(x_valid, y_valid))
+        
+        # Verbose printing
+        if verbose > 0 && epoch % verbose == 0
+            println("Epoch $epoch \t Loss: ", losses_train[end], " \t Test: ", losses_valid[end])
+        end
+
+        # Early stopping based on validation loss
+        if losses_valid[end] < best_loss
+            best_loss = losses_valid[end]
+            patience = 0
+        else
+            patience += 1
+        end
+
+        if patience > maxpatience
+            println("Stopping early. No improvement in validation loss for $maxpatience epochs.")
+            break
+        end
+    end
+
+    return neural_net, losses_train, losses_valid
+end
+
+"""
     Training RNN model 
 """
 
